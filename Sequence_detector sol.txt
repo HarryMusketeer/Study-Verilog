@@ -1,0 +1,35 @@
+
+
+
+`timescale 1ns/1ps
+
+  module Sequence_Detector_MOORE_Verilog(
+     input clock,
+     input reset,
+     input sequence_in,
+     output reg detector_out
+     );
+	  
+     parameter IDLE =2'b00;
+     parameter B =2'b01;
+     parameter C =2'b10;
+     parameter D =2'b11;
+
+     reg[1:0] current_state=IDLE;
+	  
+     always@(posedge clock or negedge reset)begin
+        if(~reset)
+            current_state<=IDLE;
+        else
+            case(current_state)
+               IDLE:if(sequence_in == 1) current_state <= B ;
+               B:if(sequence_in == 0) current_state <= C;
+               C:if(sequence_in ==1)current_state <=D;
+                        else current_state<= IDLE;
+               D:if(sequence_in ==0)current_state<= C;
+								else current_state<=B ;
+            endcase
+		end
+		
+		assign detected_101 =(current_state == D)? 1:0;
+endmodule

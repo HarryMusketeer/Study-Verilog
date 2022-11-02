@@ -1,0 +1,99 @@
+`timescale 1ns/1ps
+module Sequence_Detector_MOORE_TestBench;
+   reg clock;
+   reg reset;
+   reg sequence_in;
+   wire detector_out;
+   integer i;
+	
+   seq_det_101_fsm DUT(.clock(clock), .reset(reset), .data(data), .detector_out(detector_out));
+   
+   reg[15:0]sequence_in_reg=16'b0110_1001_0101_1010;
+   always # 2clock = ~clock;
+	
+   initial begin
+       clock=0;
+       reset=0;
+      sequence_in=0;
+		 i = 0 ;
+       #5 reset = 1;
+       for(i=0;i<16;i=i+1) 
+       begin
+           sequence_in = sequence_in_reg[i];
+           #4;
+       end
+       $finish;
+    end   
+      
+endmodule
+`timescale 1ns/1ps
+module Sequence_Detector_MOORE_Verilog(sequence_in,clock,reset,detector_out );
+input clock; // clock signal
+input reset; // reset input
+input sequence_in; // binary input
+output reg detector_out; // output of the detector
+parameter
+IDLE = 4'b0001, //Initial state, equivalent to A in state diagram.
+B = 4'b0010,
+C = 4'b0100,
+D = 4'b1000;
+
+reg [1:0] current_state, next_state;
+// sequential memory of the Moore FSM
+always @(reset,current_state)// Synchronous Reset
+
+begin
+if(reset==1)
+current_state <= IDLE; // when reset=1, reset the state of the FSM to "Zero" State
+else
+current_state <= next_state; // otherwise, next state
+end
+// combinational logic of the Moore FSM
+// to determine next state
+always @(current_state,sequence_in)
+begin
+	case(current_state)
+	IDLE: begin
+		if(sequence_in==1)
+			next_state <= B;
+		else
+	next_state <=  IDLE;
+end
+
+	B: begin
+		if(sequence_in==0)
+			next_state <= C;
+		else
+			next_state <=  B;
+		end
+
+C: begin
+if(sequence_in==0)
+next_state <=  IDLE;
+else
+next_state <=  D;
+end
+
+D: begin
+if(sequence_in==0)
+next_state <=  C;
+else
+next_state <=  B;
+end
+
+default:next_state <= IDLE;
+endcase
+end
+// combinational logic to determine the output
+// of the Moore FSM, output only depends on current state
+always @(current_state)
+begin
+case(current_state)
+IDLE: detector_out = 0;
+B: detector_out = 0;
+C: detector_out = 0;
+D: detector_out = 1;
+default: detector_out = 0;
+endcase
+end
+endmodule
